@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../home/presentation/home_page.dart';
+import '../../dashboard/presentation/dashboard_page.dart';
 import '../data/services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
@@ -40,7 +40,7 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      final response = await widget.authService.login(
+      await widget.authService.login(
         username: _usernameController.text,
         verificationCode: _verificationCodeController.text,
         language: _selectedLanguage,
@@ -50,7 +50,7 @@ class _LoginPageState extends State<LoginPage> {
 
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) => HomePage(loginResponse: response),
+          builder: (_) => const DashboardPage(),
         ),
       );
     } catch (error) {
@@ -103,6 +103,11 @@ class _LoginPageState extends State<LoginPage> {
                     const SizedBox(height: 32),
                     TextField(
                       controller: _usernameController,
+                      autofocus: true,
+                      textInputAction: TextInputAction.next,
+                      keyboardType: TextInputType.text,
+                      autocorrect: false,
+                      enableSuggestions: false,
                       decoration: const InputDecoration(
                         labelText: 'Kullanıcı',
                         prefixIcon: Icon(Icons.person_outline),
