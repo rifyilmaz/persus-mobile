@@ -9,13 +9,12 @@ class MockAuthService implements AuthService {
   @override
   Future<LoginResponse> login({
     required String username,
-    required String verificationCode,
     required String language,
   }) async {
     await Future.delayed(const Duration(seconds: 1));
 
-    if (username.trim().isEmpty || verificationCode.trim().isEmpty) {
-      throw Exception('Kullanıcı ve doğrulama kodu boş bırakılamaz.');
+    if (username.trim().isEmpty) {
+      throw Exception('Kullanıcı alanı boş bırakılamaz.');
     }
 
     final mockJson = jsonEncode({

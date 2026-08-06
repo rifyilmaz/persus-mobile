@@ -16,14 +16,12 @@ class RealAuthService implements AuthService {
   @override
   Future<LoginResponse> login({
     required String username,
-    required String verificationCode,
     required String language,
   }) async {
     final uri = Uri.parse('$baseUrl/login');
 
     final request = LoginRequest(
       username: username,
-      verificationCode: verificationCode,
       language: language,
     );
 
@@ -36,7 +34,9 @@ class RealAuthService implements AuthService {
     );
 
     if (response.statusCode != 200) {
-      throw Exception('Giriş işlemi başarısız oldu: ${response.statusCode}');
+      throw Exception(
+        'Giriş işlemi başarısız oldu: ${response.statusCode}',
+      );
     }
 
     final data = jsonDecode(response.body) as Map<String, dynamic>;

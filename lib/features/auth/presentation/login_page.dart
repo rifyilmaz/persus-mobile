@@ -19,21 +19,26 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _usernameController =
       TextEditingController(text: 'demo');
 
-  final TextEditingController _verificationCodeController =
-      TextEditingController(text: 'C0362D');
-
   String _selectedLanguage = 'Türkçe';
+  bool _isHumanVerified = false;
   bool _isLoading = false;
   String? _errorMessage;
 
   @override
   void dispose() {
     _usernameController.dispose();
-    _verificationCodeController.dispose();
     super.dispose();
   }
 
   Future<void> _login() async {
+    if (!_isHumanVerified) {
+      setState(() {
+        _errorMessage =
+            'Devam etmek için “Ben robot değilim” alanını işaretleyin.';
+      });
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -42,11 +47,12 @@ class _LoginPageState extends State<LoginPage> {
     try {
       await widget.authService.login(
         username: _usernameController.text,
-        verificationCode: _verificationCodeController.text,
         language: _selectedLanguage,
       );
 
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
 
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
@@ -54,6 +60,10 @@ class _LoginPageState extends State<LoginPage> {
         ),
       );
     } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
       setState(() {
         _errorMessage = error.toString().replaceFirst('Exception: ', '');
       });
@@ -68,6 +78,8 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       body: Center(
         child: ConstrainedBox(
@@ -130,20 +142,57 @@ class _LoginPageState extends State<LoginPage> {
                           child: Text('English'),
                         ),
                       ],
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() {
-                            _selectedLanguage = value;
-                          });
-                        }
-                      },
+                      onChanged: _isLoading
+                          ? null
+                          : (value) {
+                              if (value != null) {
+                                setState(() {
+                                  _selectedLanguage = value;
+                                });
+                              }
+                            },
                     ),
                     const SizedBox(height: 16),
-                    TextField(
-                      controller: _verificationCodeController,
-                      decoration: const InputDecoration(
-                        labelText: 'Doğrulama Kodu',
-                        prefixIcon: Icon(Icons.verified_outlined),
+                    Material(
+                      color: _isHumanVerified
+                          ? colorScheme.primaryContainer.withValues(alpha: 0.35)
+                          : colorScheme.surface,
+                      shape: RoundedRectangleBorder(
+                        side: BorderSide(
+                          color: _isHumanVerified
+                              ? colorScheme.primary
+                              : colorScheme.outline,
+                        ),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: CheckboxListTile(
+                        value: _isHumanVerified,
+                        controlAffinity: ListTileControlAffinity.leading,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
+                        title: const Text(
+                          'Ben robot değilim',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        secondary: Icon(
+                          Icons.verified_user_outlined,
+                          color: _isHumanVerified
+                              ? colorScheme.primary
+                              : colorScheme.onSurfaceVariant,
+                        ),
+                        onChanged: _isLoading
+                            ? null
+                            : (value) {
+                                setState(() {
+                                  _isHumanVerified = value ?? false;
+                                  _errorMessage = null;
+                                });
+                              },
                       ),
                     ),
                     if (_errorMessage != null) ...[
@@ -151,7 +200,7 @@ class _LoginPageState extends State<LoginPage> {
                       Text(
                         _errorMessage!,
                         style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
+                          color: colorScheme.error,
                         ),
                       ),
                     ],
