@@ -17,24 +17,36 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _usernameController =
-      TextEditingController(text: 'demo');
+      TextEditingController();
 
-  String _selectedLanguage = 'Türkçe';
-  bool _isHumanVerified = false;
+  final TextEditingController _passwordController =
+      TextEditingController();
+
   bool _isLoading = false;
+  bool _obscurePassword = true;
   String? _errorMessage;
 
   @override
   void dispose() {
     _usernameController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
   Future<void> _login() async {
-    if (!_isHumanVerified) {
+    final username = _usernameController.text.trim();
+    final password = _passwordController.text;
+
+    if (username.isEmpty) {
       setState(() {
-        _errorMessage =
-            'Devam etmek için “Ben robot değilim” alanını işaretleyin.';
+        _errorMessage = 'Kullanıcı adı boş bırakılamaz.';
+      });
+      return;
+    }
+
+    if (password.isEmpty) {
+      setState(() {
+        _errorMessage = 'Şifre boş bırakılamaz.';
       });
       return;
     }
@@ -45,12 +57,22 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      await widget.authService.login(
-        username: _usernameController.text,
-        language: _selectedLanguage,
+      final loginResponse = await widget.authService.login(
+        username: username,
+        password: password,
       );
 
       if (!mounted) {
+        return;
+      }
+
+      if (!loginResponse.isSuccess) {
+        setState(() {
+          _errorMessage = loginResponse.errorMsg.isNotEmpty
+              ? loginResponse.errorMsg
+              : 'Giriş işlemi başarısız oldu.';
+        });
+
         return;
       }
 
@@ -65,7 +87,9 @@ class _LoginPageState extends State<LoginPage> {
       }
 
       setState(() {
-        _errorMessage = error.toString().replaceFirst('Exception: ', '');
+        _errorMessage = error
+            .toString()
+            .replaceFirst('Exception: ', '');
       });
     } finally {
       if (mounted) {
@@ -81,143 +105,143 @@ class _LoginPageState extends State<LoginPage> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 430),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Card(
-              elevation: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Icon(
-                      Icons.hexagon_outlined,
-                      size: 64,
-                      color: Color(0xFF246BFE),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'PERSUS',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.bold,
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: 430,
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Card(
+                elevation: 2,
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment:
+                        CrossAxisAlignment.stretch,
+                    children: [
+                      const Icon(
+                        Icons.hexagon_outlined,
+                        size: 64,
+                        color: Color(0xFF246BFE),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Mobil Uygulama Giriş Ekranı',
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 32),
-                    TextField(
-                      controller: _usernameController,
-                      autofocus: true,
-                      textInputAction: TextInputAction.next,
-                      keyboardType: TextInputType.text,
-                      autocorrect: false,
-                      enableSuggestions: false,
-                      decoration: const InputDecoration(
-                        labelText: 'Kullanıcı',
-                        prefixIcon: Icon(Icons.person_outline),
+
+                      const SizedBox(height: 16),
+
+                      const Text(
+                        'PERSUS',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 30,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<String>(
-                      initialValue: _selectedLanguage,
-                      decoration: const InputDecoration(
-                        labelText: 'Dil',
-                        prefixIcon: Icon(Icons.language),
+
+                      const SizedBox(height: 8),
+
+                      const Text(
+                        'Mobil Uygulama Giriş Ekranı',
+                        textAlign: TextAlign.center,
                       ),
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'Türkçe',
-                          child: Text('Türkçe'),
+
+                      const SizedBox(height: 32),
+
+                      TextField(
+                        controller: _usernameController,
+                        autofocus: true,
+                        enabled: !_isLoading,
+                        textInputAction:
+                            TextInputAction.next,
+                        keyboardType: TextInputType.text,
+                        autocorrect: false,
+                        enableSuggestions: false,
+                        decoration: const InputDecoration(
+                          labelText: 'Kullanıcı',
+                          prefixIcon:
+                              Icon(Icons.person_outline),
+                          border: OutlineInputBorder(),
                         ),
-                        DropdownMenuItem(
-                          value: 'English',
-                          child: Text('English'),
-                        ),
-                      ],
-                      onChanged: _isLoading
-                          ? null
-                          : (value) {
-                              if (value != null) {
-                                setState(() {
-                                  _selectedLanguage = value;
-                                });
-                              }
-                            },
-                    ),
-                    const SizedBox(height: 16),
-                    Material(
-                      color: _isHumanVerified
-                          ? colorScheme.primaryContainer.withValues(alpha: 0.35)
-                          : colorScheme.surface,
-                      shape: RoundedRectangleBorder(
-                        side: BorderSide(
-                          color: _isHumanVerified
-                              ? colorScheme.primary
-                              : colorScheme.outline,
-                        ),
-                        borderRadius: BorderRadius.circular(4),
                       ),
-                      clipBehavior: Clip.antiAlias,
-                      child: CheckboxListTile(
-                        value: _isHumanVerified,
-                        controlAffinity: ListTileControlAffinity.leading,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 4,
-                        ),
-                        title: const Text(
-                          'Ben robot değilim',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
+
+                      const SizedBox(height: 16),
+
+                      TextField(
+                        controller: _passwordController,
+                        enabled: !_isLoading,
+                        obscureText: _obscurePassword,
+                        textInputAction:
+                            TextInputAction.done,
+                        onSubmitted: (_) {
+                          if (!_isLoading) {
+                            _login();
+                          }
+                        },
+                        decoration: InputDecoration(
+                          labelText: 'Şifre',
+                          prefixIcon:
+                              const Icon(Icons.lock_outline),
+                          border: const OutlineInputBorder(),
+                          suffixIcon: IconButton(
+                            tooltip: _obscurePassword
+                                ? 'Şifreyi göster'
+                                : 'Şifreyi gizle',
+                            onPressed: _isLoading
+                                ? null
+                                : () {
+                                    setState(() {
+                                      _obscurePassword =
+                                          !_obscurePassword;
+                                    });
+                                  },
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility_outlined
+                                  : Icons
+                                      .visibility_off_outlined,
+                            ),
                           ),
                         ),
-                        secondary: Icon(
-                          Icons.verified_user_outlined,
-                          color: _isHumanVerified
-                              ? colorScheme.primary
-                              : colorScheme.onSurfaceVariant,
-                        ),
-                        onChanged: _isLoading
-                            ? null
-                            : (value) {
-                                setState(() {
-                                  _isHumanVerified = value ?? false;
-                                  _errorMessage = null;
-                                });
-                              },
                       ),
-                    ),
-                    if (_errorMessage != null) ...[
-                      const SizedBox(height: 16),
-                      Text(
-                        _errorMessage!,
-                        style: TextStyle(
-                          color: colorScheme.error,
+
+                      if (_errorMessage != null) ...[
+                        const SizedBox(height: 16),
+                        Container(
+                          padding:
+                              const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: colorScheme.errorContainer,
+                            borderRadius:
+                                BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            _errorMessage!,
+                            style: TextStyle(
+                              color: colorScheme
+                                  .onErrorContainer,
+                            ),
+                          ),
                         ),
+                      ],
+
+                      const SizedBox(height: 24),
+
+                      FilledButton(
+                        onPressed:
+                            _isLoading ? null : _login,
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child:
+                                    CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text('Giriş Yap'),
                       ),
                     ],
-                    const SizedBox(height: 24),
-                    FilledButton(
-                      onPressed: _isLoading ? null : _login,
-                      child: _isLoading
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : const Text('Bağlan'),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),

@@ -16,7 +16,7 @@ class DashboardPage extends StatelessWidget {
   void _logout(BuildContext context) {
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(
-        builder: (_) => const LoginPage(
+        builder: (_) => LoginPage(
           authService: MockAuthService(),
         ),
       ),
