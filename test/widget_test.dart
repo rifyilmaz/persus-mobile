@@ -5,6 +5,11 @@ import 'package:persus_mobile/features/auth/data/models/login_response.dart';
 import 'package:persus_mobile/features/auth/data/services/auth_service.dart';
 import 'package:persus_mobile/features/auth/presentation/login_page.dart';
 
+import 'package:persus_mobile/features/security/data/models/security_item.dart';
+import 'package:persus_mobile/features/security/data/models/security_menu.dart';
+import 'package:persus_mobile/features/security/data/services/security_service.dart';
+import 'package:persus_mobile/features/auth/data/services/auth_session.dart';
+
 class FakeAuthService implements AuthService {
   bool loginCalled = false;
   String? receivedUsername;
@@ -32,16 +37,33 @@ class FakeAuthService implements AuthService {
   }
 }
 
+class FakeSecurityService implements SecurityService {
+  @override
+  Future<List<SecurityItem>> getServers() async => [];
+
+  @override
+  Future<List<SecurityItem>> getRoles() async => [];
+
+  @override
+  Future<List<SecurityItem>> getOrganizations() async => [];
+
+  @override
+  Future<List<SecurityMenu>> getMenus() async => [];
+}
+
 void main() {
   testWidgets(
     'Persus giriş ekranında kullanıcı adı, şifre ve giriş butonu gösterilir',
     (tester) async {
       final authService = FakeAuthService();
+      final securityService = FakeSecurityService();
 
       await tester.pumpWidget(
         MaterialApp(
           home: LoginPage(
             authService: authService,
+            securityService: securityService,
+            authSession: AuthSession(),
           ),
         ),
       );
@@ -62,11 +84,14 @@ void main() {
     'Kullanıcı adı ve şifre girildiğinde login servisi çağrılır',
     (tester) async {
       final authService = FakeAuthService();
+      final securityService = FakeSecurityService();
 
       await tester.pumpWidget(
         MaterialApp(
           home: LoginPage(
             authService: authService,
+            securityService: securityService,
+            authSession: AuthSession(),
           ),
         ),
       );
@@ -107,11 +132,14 @@ void main() {
     'Kullanıcı adı boş bırakılırsa giriş yapılmaz',
     (tester) async {
       final authService = FakeAuthService();
+      final securityService = FakeSecurityService();
 
       await tester.pumpWidget(
         MaterialApp(
           home: LoginPage(
             authService: authService,
+            securityService: securityService,
+            authSession: AuthSession(),
           ),
         ),
       );
@@ -143,11 +171,14 @@ void main() {
     'Şifre boş bırakılırsa giriş yapılmaz',
     (tester) async {
       final authService = FakeAuthService();
+      final securityService = FakeSecurityService();
 
       await tester.pumpWidget(
         MaterialApp(
           home: LoginPage(
             authService: authService,
+            securityService: securityService,
+            authSession: AuthSession(),
           ),
         ),
       );

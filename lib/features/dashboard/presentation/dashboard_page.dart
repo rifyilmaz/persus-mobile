@@ -1,49 +1,166 @@
 import 'package:flutter/material.dart';
 
-import '../../shell/presentation/main_shell.dart';
-
-import '../../auth/data/services/mock_auth_service.dart';
+import '../../auth/data/services/auth_service.dart';
+import '../../auth/data/services/auth_session.dart';
 import '../../auth/presentation/login_page.dart';
-import '../../shell/presentation/widgets/persus_drawer.dart';
+
 import '../../change_password/presentation/change_password_page.dart';
 import '../../profile/presentation/profile_page.dart';
+
+import '../../security/data/models/security_menu.dart';
+import '../../security/data/services/security_service.dart';
+
+import '../../shell/presentation/main_shell.dart';
+import '../../shell/presentation/widgets/persus_drawer.dart';
+
 import 'dashboard_detail_page.dart';
 
-class DashboardPage extends StatelessWidget {
-  const DashboardPage({super.key});
+class DashboardPage extends StatefulWidget {
+  final SecurityService securityService;
 
+  final AuthService authService;
 
-  void _logout(BuildContext context) {
+  final AuthSession authSession;
+
+  const DashboardPage({
+    super.key,
+    required this.securityService,
+    required this.authService,
+    required this.authSession,
+  });
+
+  @override
+  State<DashboardPage> createState() =>
+      _DashboardPageState();
+}
+
+class _DashboardPageState
+    extends State<DashboardPage> {
+  List<SecurityMenu> _menus = [];
+
+  bool _isLoadingMenus = true;
+
+  String? _menuError;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _loadMenus();
+  }
+
+  Future<void> _loadMenus() async {
+    if (mounted) {
+      setState(() {
+        _isLoadingMenus = true;
+        _menuError = null;
+      });
+    }
+
+    try {
+      final menus =
+          await widget.securityService.getMenus();
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _menus = menus;
+        _isLoadingMenus = false;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _isLoadingMenus = false;
+        _menuError = error
+            .toString()
+            .replaceFirst(
+              'Exception: ',
+              '',
+            );
+      });
+    }
+  }
+
+  void _logout(
+    BuildContext context,
+  ) {
+    widget.authSession.clear();
+
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(
         builder: (_) => LoginPage(
-          authService: MockAuthService(),
+          authService: widget.authService,
+          securityService:
+              widget.securityService,
+          authSession:
+              widget.authSession,
         ),
       ),
       (route) => false,
     );
   }
 
-  void _openProfile(BuildContext context) {
+  void _openProfile(
+    BuildContext context,
+  ) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => const ProfilePage(),
+        builder: (_) =>
+            const ProfilePage(),
       ),
     );
   }
 
-  void _openChangePassword(BuildContext context) {
+  void _openChangePassword(
+    BuildContext context,
+  ) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => const ChangePasswordPage(),
+        builder: (_) =>
+            const ChangePasswordPage(),
       ),
     );
   }
 
-  void _openDetail(BuildContext context, DashboardDetailType type) {
+  void _openDetail(
+    BuildContext context,
+    DashboardDetailType type,
+  ) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => DashboardDetailPage(type: type),
+        builder: (_) =>
+            DashboardDetailPage(
+          type: type,
+        ),
+      ),
+    );
+  }
+
+  void _openMainShell(
+    BuildContext context,
+    int index,
+  ) {
+    if (index < 0 || index >= 3) {
+      return;
+    }
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => MainShell(
+          initialIndex: index,
+          securityService:
+              widget.securityService,
+          authService:
+              widget.authService,
+          authSession:
+              widget.authSession,
+          menus: _menus,
+        ),
       ),
     );
   }
@@ -51,54 +168,46 @@ class DashboardPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final summaryItems = [
-      _DashboardSummaryItem(
+      const _DashboardSummaryItem(
         title: 'Gecikmiş Görüşler',
         count: 0,
         icon: Icons.folder_open_outlined,
-        type: DashboardDetailType.delayedMeetings,
+        type:
+            DashboardDetailType.delayedMeetings,
       ),
-      _DashboardSummaryItem(
+      const _DashboardSummaryItem(
         title: 'Bekleyen Görüşler',
         count: 0,
         icon: Icons.description_outlined,
-        type: DashboardDetailType.pendingMeetings,
+        type:
+            DashboardDetailType.pendingMeetings,
       ),
-      _DashboardSummaryItem(
+      const _DashboardSummaryItem(
         title: 'Duruşma Bilgileri',
         count: 0,
         icon: Icons.event_note_outlined,
-        type: DashboardDetailType.hearingInfo,
+        type:
+            DashboardDetailType.hearingInfo,
       ),
-      _DashboardSummaryItem(
+      const _DashboardSummaryItem(
         title: 'Dosya İstatistik',
         count: 0,
         icon: Icons.analytics_outlined,
-        type: DashboardDetailType.fileStatistics,
+        type:
+            DashboardDetailType.fileStatistics,
       ),
     ];
 
     return Scaffold(
-      drawer: PersusDrawer(
-        selectedIndex: null,
-        onDashboardSelected: () {
-        },
-        onSelected: (index) {
-          Navigator.of(context).pop();
-
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => MainShell(initialIndex: index),
-            ),
-          );
-        },
-        onLogout: () => _logout(context),
-      ),
+      drawer: _buildDrawer(context),
       appBar: AppBar(
         title: const Text('Ana Sayfa'),
         actions: [
           PopupMenuButton<String>(
             tooltip: 'Hesap',
-            icon: const Icon(Icons.account_circle_outlined),
+            icon: const Icon(
+              Icons.account_circle_outlined,
+            ),
             onSelected: (value) {
               if (value == 'profile') {
                 _openProfile(context);
@@ -113,7 +222,9 @@ class DashboardPage extends StatelessWidget {
                 value: 'profile',
                 child: Row(
                   children: [
-                    Icon(Icons.person_outline),
+                    Icon(
+                      Icons.person_outline,
+                    ),
                     SizedBox(width: 12),
                     Text('Profil'),
                   ],
@@ -123,7 +234,9 @@ class DashboardPage extends StatelessWidget {
                 value: 'password',
                 child: Row(
                   children: [
-                    Icon(Icons.sync_lock_outlined),
+                    Icon(
+                      Icons.sync_lock_outlined,
+                    ),
                     SizedBox(width: 12),
                     Text('Şifre Değiştir'),
                   ],
@@ -149,7 +262,6 @@ class DashboardPage extends StatelessWidget {
         children: [
           const _DashboardHeader(),
           const SizedBox(height: 20),
-
           const Text(
             'Ana Sayfa',
             style: TextStyle(
@@ -158,74 +270,158 @@ class DashboardPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-
           GridView.builder(
             itemCount: summaryItems.length,
             shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            physics:
+                const NeverScrollableScrollPhysics(),
+            gridDelegate:
+                const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               mainAxisSpacing: 12,
               crossAxisSpacing: 12,
               childAspectRatio: 1.35,
             ),
             itemBuilder: (context, index) {
-              final item = summaryItems[index];
+              final item =
+                  summaryItems[index];
+
               return _SummaryCard(
                 item: item,
-                onTap: () => _openDetail(context, item.type),
+                onTap: () => _openDetail(
+                  context,
+                  item.type,
+                ),
               );
             },
           ),
-
           const SizedBox(height: 20),
-
           const _AnnouncementsCard(),
           const SizedBox(height: 16),
           const _AgendaCard(),
-
           const SizedBox(height: 24),
-
-          
         ],
       ),
     );
   }
+
+  Widget _buildDrawer(
+    BuildContext context,
+  ) {
+    if (_isLoadingMenus) {
+      return const Drawer(
+        child: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (_menuError != null) {
+      return Drawer(
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisAlignment:
+                  MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.error_outline,
+                  size: 48,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Menüler yüklenemedi.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _menuError!,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                FilledButton.icon(
+                  onPressed: _loadMenus,
+                  icon: const Icon(
+                    Icons.refresh,
+                  ),
+                  label: const Text(
+                    'Tekrar Dene',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return PersusDrawer(
+      selectedIndex: null,
+      menus: _menus,
+      onDashboardSelected: () {
+        Navigator.of(context).pop();
+      },
+      onSelected: (index) {
+        _openMainShell(
+          context,
+          index,
+        );
+      },
+      onLogout: () => _logout(context),
+    );
+  }
 }
 
-class _DashboardHeader extends StatelessWidget {
+class _DashboardHeader
+    extends StatelessWidget {
   const _DashboardHeader();
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: Theme.of(context).colorScheme.primaryContainer,
+      color: Theme.of(context)
+          .colorScheme
+          .primaryContainer,
       child: const Padding(
         padding: EdgeInsets.all(20),
         child: Row(
           children: [
             CircleAvatar(
               radius: 28,
-              child: Icon(Icons.home_work_outlined, size: 30),
+              child: Icon(
+                Icons.home_work_outlined,
+                size: 30,
+              ),
             ),
             SizedBox(width: 16),
             Expanded(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
                 children: [
                   Text(
                     'PERSUS',
                     style: TextStyle(
                       fontSize: 24,
-                      fontWeight: FontWeight.bold,
+                      fontWeight:
+                          FontWeight.bold,
                     ),
                   ),
                   SizedBox(height: 4),
-                  Text('Hukuk dava dosya takip mobil uygulaması'),
+                  Text(
+                    'Hukuk dava dosya takip mobil uygulaması',
+                  ),
                   SizedBox(height: 4),
                   Text(
                     'Demo Edition',
-                    style: TextStyle(fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      fontWeight:
+                          FontWeight.w600,
+                    ),
                   ),
                 ],
               ),
@@ -251,7 +447,8 @@ class _DashboardSummaryItem {
   });
 }
 
-class _SummaryCard extends StatelessWidget {
+class _SummaryCard
+    extends StatelessWidget {
   final _DashboardSummaryItem item;
   final VoidCallback onTap;
 
@@ -262,7 +459,8 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final colorScheme =
+        Theme.of(context).colorScheme;
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -273,18 +471,23 @@ class _SummaryCard extends StatelessWidget {
           child: Stack(
             children: [
               Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
                 children: [
                   Text(
                     item.title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
+                    style:
+                        const TextStyle(
+                      fontWeight:
+                          FontWeight.w700,
                     ),
                   ),
                   const Spacer(),
                   CircleAvatar(
                     radius: 24,
-                    backgroundColor: colorScheme.primaryContainer,
+                    backgroundColor:
+                        colorScheme
+                            .primaryContainer,
                     child: Icon(item.icon),
                   ),
                 ],
@@ -294,13 +497,16 @@ class _SummaryCard extends StatelessWidget {
                 top: 0,
                 child: CircleAvatar(
                   radius: 14,
-                  backgroundColor: colorScheme.secondary,
+                  backgroundColor:
+                      colorScheme.secondary,
                   child: Text(
                     item.count.toString(),
-                    style: const TextStyle(
+                    style:
+                        const TextStyle(
                       color: Colors.white,
                       fontSize: 12,
-                      fontWeight: FontWeight.bold,
+                      fontWeight:
+                          FontWeight.bold,
                     ),
                   ),
                 ),
@@ -308,12 +514,13 @@ class _SummaryCard extends StatelessWidget {
             ],
           ),
         ),
-      )
+      ),
     );
   }
 }
 
-class _AnnouncementsCard extends StatelessWidget {
+class _AnnouncementsCard
+    extends StatelessWidget {
   const _AnnouncementsCard();
 
   @override
@@ -322,7 +529,8 @@ class _AnnouncementsCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: Container(
         height: 150,
-        decoration: const BoxDecoration(
+        decoration:
+            const BoxDecoration(
           gradient: LinearGradient(
             colors: [
               Color(0xFF0F2742),
@@ -336,7 +544,8 @@ class _AnnouncementsCard extends StatelessWidget {
           padding: EdgeInsets.all(20),
           child: Center(
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment:
+                  MainAxisAlignment.center,
               children: [
                 Icon(
                   Icons.campaign_outlined,
@@ -349,14 +558,18 @@ class _AnnouncementsCard extends StatelessWidget {
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 22,
-                    fontWeight: FontWeight.bold,
+                    fontWeight:
+                        FontWeight.bold,
                   ),
                 ),
                 SizedBox(height: 6),
                 Text(
                   'Duyuruları buradan takip edebilirsiniz.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white),
+                  textAlign:
+                      TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                  ),
                 ),
               ],
             ),
@@ -367,28 +580,36 @@ class _AnnouncementsCard extends StatelessWidget {
   }
 }
 
-class _AgendaCard extends StatelessWidget {
+class _AgendaCard
+    extends StatelessWidget {
   const _AgendaCard();
 
   @override
   Widget build(BuildContext context) {
-    final days = List.generate(31, (index) => index + 1);
+    final days = List.generate(
+      31,
+      (index) => index + 1,
+    );
 
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment:
+              CrossAxisAlignment.start,
           children: [
             const Row(
               children: [
-                Icon(Icons.calendar_month_outlined),
+                Icon(
+                  Icons.calendar_month_outlined,
+                ),
                 SizedBox(width: 8),
                 Text(
                   'Ajanda',
                   style: TextStyle(
                     fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                    fontWeight:
+                        FontWeight.bold,
                   ),
                 ),
                 Spacer(),
@@ -399,30 +620,40 @@ class _AgendaCard extends StatelessWidget {
             GridView.builder(
               itemCount: days.length,
               shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              physics:
+                  const NeverScrollableScrollPhysics(),
+              gridDelegate:
+                  const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 7,
                 mainAxisSpacing: 6,
                 crossAxisSpacing: 6,
               ),
               itemBuilder: (context, index) {
                 final day = days[index];
-                final isSelected = day == 28;
+                final isSelected =
+                    day == 28;
 
                 return Container(
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
+                  alignment:
+                      Alignment.center,
+                  decoration:
+                      BoxDecoration(
                     color: isSelected
                         ? Colors.red
-                        : Theme.of(context).colorScheme.surfaceContainerHighest,
+                        : Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHighest,
                     shape: BoxShape.circle,
                   ),
                   child: Text(
                     day.toString(),
                     style: TextStyle(
-                      color: isSelected ? Colors.white : null,
-                      fontWeight:
-                          isSelected ? FontWeight.bold : FontWeight.normal,
+                      color: isSelected
+                          ? Colors.white
+                          : null,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                     ),
                   ),
                 );

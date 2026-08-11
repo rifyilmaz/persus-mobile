@@ -1,14 +1,21 @@
 import 'package:flutter/material.dart';
 
 import '../../dashboard/presentation/dashboard_page.dart';
+import '../../security/data/services/security_service.dart';
+
 import '../data/services/auth_service.dart';
+import '../data/services/auth_session.dart';
 
 class LoginPage extends StatefulWidget {
   final AuthService authService;
+  final SecurityService securityService;
+  final AuthSession authSession;
 
   const LoginPage({
     super.key,
     required this.authService,
+    required this.securityService,
+    required this.authSession,
   });
 
   @override
@@ -39,14 +46,16 @@ class _LoginPageState extends State<LoginPage> {
 
     if (username.isEmpty) {
       setState(() {
-        _errorMessage = 'Kullanıcı adı boş bırakılamaz.';
+        _errorMessage =
+            'Kullanıcı adı boş bırakılamaz.';
       });
       return;
     }
 
     if (password.isEmpty) {
       setState(() {
-        _errorMessage = 'Şifre boş bırakılamaz.';
+        _errorMessage =
+            'Şifre boş bırakılamaz.';
       });
       return;
     }
@@ -57,7 +66,8 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      final loginResponse = await widget.authService.login(
+      final loginResponse =
+          await widget.authService.login(
         username: username,
         password: password,
       );
@@ -68,9 +78,10 @@ class _LoginPageState extends State<LoginPage> {
 
       if (!loginResponse.isSuccess) {
         setState(() {
-          _errorMessage = loginResponse.errorMsg.isNotEmpty
-              ? loginResponse.errorMsg
-              : 'Giriş işlemi başarısız oldu.';
+          _errorMessage =
+              loginResponse.errorMsg.isNotEmpty
+                  ? loginResponse.errorMsg
+                  : 'Giriş işlemi başarısız oldu.';
         });
 
         return;
@@ -78,7 +89,14 @@ class _LoginPageState extends State<LoginPage> {
 
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) => const DashboardPage(),
+          builder: (_) => DashboardPage(
+            securityService:
+                widget.securityService,
+            authService:
+                widget.authService,
+            authSession:
+                widget.authSession,
+          ),
         ),
       );
     } catch (error) {
@@ -89,7 +107,10 @@ class _LoginPageState extends State<LoginPage> {
       setState(() {
         _errorMessage = error
             .toString()
-            .replaceFirst('Exception: ', '');
+            .replaceFirst(
+              'Exception: ',
+              '',
+            );
       });
     } finally {
       if (mounted) {
@@ -102,7 +123,8 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final colorScheme =
+        Theme.of(context).colorScheme;
 
     return Scaffold(
       body: SafeArea(
@@ -126,50 +148,51 @@ class _LoginPageState extends State<LoginPage> {
                         size: 64,
                         color: Color(0xFF246BFE),
                       ),
-
                       const SizedBox(height: 16),
-
                       const Text(
                         'PERSUS',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 30,
-                          fontWeight: FontWeight.bold,
+                          fontWeight:
+                              FontWeight.bold,
                         ),
                       ),
-
                       const SizedBox(height: 8),
-
                       const Text(
                         'Mobil Uygulama Giriş Ekranı',
-                        textAlign: TextAlign.center,
+                        textAlign:
+                            TextAlign.center,
                       ),
-
                       const SizedBox(height: 32),
-
                       TextField(
-                        controller: _usernameController,
+                        controller:
+                            _usernameController,
                         autofocus: true,
                         enabled: !_isLoading,
                         textInputAction:
                             TextInputAction.next,
-                        keyboardType: TextInputType.text,
+                        keyboardType:
+                            TextInputType.text,
                         autocorrect: false,
                         enableSuggestions: false,
-                        decoration: const InputDecoration(
+                        decoration:
+                            const InputDecoration(
                           labelText: 'Kullanıcı',
-                          prefixIcon:
-                              Icon(Icons.person_outline),
-                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(
+                            Icons.person_outline,
+                          ),
+                          border:
+                              OutlineInputBorder(),
                         ),
                       ),
-
                       const SizedBox(height: 16),
-
                       TextField(
-                        controller: _passwordController,
+                        controller:
+                            _passwordController,
                         enabled: !_isLoading,
-                        obscureText: _obscurePassword,
+                        obscureText:
+                            _obscurePassword,
                         textInputAction:
                             TextInputAction.done,
                         onSubmitted: (_) {
@@ -177,42 +200,53 @@ class _LoginPageState extends State<LoginPage> {
                             _login();
                           }
                         },
-                        decoration: InputDecoration(
+                        decoration:
+                            InputDecoration(
                           labelText: 'Şifre',
                           prefixIcon:
-                              const Icon(Icons.lock_outline),
-                          border: const OutlineInputBorder(),
-                          suffixIcon: IconButton(
-                            tooltip: _obscurePassword
-                                ? 'Şifreyi göster'
-                                : 'Şifreyi gizle',
-                            onPressed: _isLoading
-                                ? null
-                                : () {
-                                    setState(() {
-                                      _obscurePassword =
-                                          !_obscurePassword;
-                                    });
-                                  },
+                              const Icon(
+                            Icons.lock_outline,
+                          ),
+                          border:
+                              const OutlineInputBorder(),
+                          suffixIcon:
+                              IconButton(
+                            tooltip:
+                                _obscurePassword
+                                    ? 'Şifreyi göster'
+                                    : 'Şifreyi gizle',
+                            onPressed:
+                                _isLoading
+                                    ? null
+                                    : () {
+                                        setState(() {
+                                          _obscurePassword =
+                                              !_obscurePassword;
+                                        });
+                                      },
                             icon: Icon(
                               _obscurePassword
-                                  ? Icons.visibility_outlined
+                                  ? Icons
+                                      .visibility_outlined
                                   : Icons
                                       .visibility_off_outlined,
                             ),
                           ),
                         ),
                       ),
-
                       if (_errorMessage != null) ...[
                         const SizedBox(height: 16),
                         Container(
                           padding:
                               const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: colorScheme.errorContainer,
+                          decoration:
+                              BoxDecoration(
+                            color: colorScheme
+                                .errorContainer,
                             borderRadius:
-                                BorderRadius.circular(8),
+                                BorderRadius.circular(
+                              8,
+                            ),
                           ),
                           child: Text(
                             _errorMessage!,
@@ -223,12 +257,12 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                       ],
-
                       const SizedBox(height: 24),
-
                       FilledButton(
                         onPressed:
-                            _isLoading ? null : _login,
+                            _isLoading
+                                ? null
+                                : _login,
                         child: _isLoading
                             ? const SizedBox(
                                 width: 22,
@@ -238,7 +272,9 @@ class _LoginPageState extends State<LoginPage> {
                                   strokeWidth: 2,
                                 ),
                               )
-                            : const Text('Giriş Yap'),
+                            : const Text(
+                                'Giriş Yap',
+                              ),
                       ),
                     ],
                   ),

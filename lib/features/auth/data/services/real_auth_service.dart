@@ -5,12 +5,15 @@ import 'package:http/http.dart' as http;
 import '../models/login_request.dart';
 import '../models/login_response.dart';
 import 'auth_service.dart';
+import 'auth_session.dart';
 
 class RealAuthService implements AuthService {
   final String baseUrl;
+  final AuthSession session;
 
   const RealAuthService({
     required this.baseUrl,
+    required this.session,
   });
 
   @override
@@ -40,19 +43,18 @@ class RealAuthService implements AuthService {
       final decoded = jsonDecode(response.body);
 
       if (decoded is! Map<String, dynamic>) {
-        throw const FormatException(
-          'Sunucudan beklenmeyen veri formatı döndü.',
-        );
+        throw const FormatException();
       }
 
       data = decoded;
-    } on FormatException {
+    } catch (_) {
       throw Exception(
         'Sunucudan geçerli bir JSON yanıtı alınamadı.',
       );
     }
 
-    if (response.statusCode != 200) {
+    if (response.statusCode < 200 ||
+        response.statusCode >= 300) {
       final errorMessage = data['errorMsg']?.toString();
 
       if (errorMessage != null && errorMessage.isNotEmpty) {
@@ -76,6 +78,14 @@ class RealAuthService implements AuthService {
         'Kullanıcı adı veya şifre hatalı.',
       );
     }
+
+    if (loginResponse.token.trim().isEmpty) {
+      throw Exception(
+        'Giriş başarılı ancak sunucudan geçerli bir token alınamadı.',
+      );
+    }
+
+    session.setToken(loginResponse.token);
 
     return loginResponse;
   }

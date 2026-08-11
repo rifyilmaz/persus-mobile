@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
 
+import '../../../security/data/models/security_menu.dart';
+
 class PersusDrawer extends StatelessWidget {
   final int? selectedIndex;
+
   final VoidCallback onDashboardSelected;
+
   final ValueChanged<int> onSelected;
+
   final VoidCallback onLogout;
+
+  final List<SecurityMenu> menus;
 
   const PersusDrawer({
     super.key,
@@ -12,7 +19,53 @@ class PersusDrawer extends StatelessWidget {
     required this.onDashboardSelected,
     required this.onSelected,
     required this.onLogout,
+    this.menus = const [],
   });
+
+  int? _getMappedIndex(
+    String menuAdi,
+  ) {
+    switch (menuAdi) {
+      case 'menu.adt.davadosyayeni':
+        return 0;
+
+      case 'menu.adt.durusmalistesi':
+        return 1;
+
+      case 'menu.adt.dosya':
+        return 2;
+
+      default:
+        return null;
+    }
+  }
+
+  IconData _getIconForIndex(
+    int? index,
+    bool isSelected,
+  ) {
+    switch (index) {
+      case 0:
+        return isSelected
+            ? Icons.note_add
+            : Icons.note_add_outlined;
+
+      case 1:
+        return isSelected
+            ? Icons.gavel
+            : Icons.gavel_outlined;
+
+      case 2:
+        return isSelected
+            ? Icons.search
+            : Icons.search_outlined;
+
+      default:
+        return isSelected
+            ? Icons.circle
+            : Icons.circle_outlined;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,20 +80,27 @@ class PersusDrawer extends StatelessWidget {
                   CircleAvatar(
                     radius: 28,
                     backgroundColor:
-                        Theme.of(context).colorScheme.primaryContainer,
-                    child: const Icon(Icons.home_work_outlined),
+                        Theme.of(context)
+                            .colorScheme
+                            .primaryContainer,
+                    child: const Icon(
+                      Icons.home_work_outlined,
+                    ),
                   ),
                   const SizedBox(width: 16),
                   const Expanded(
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment:
+                          MainAxisAlignment.center,
+                      crossAxisAlignment:
+                          CrossAxisAlignment.start,
                       children: [
                         Text(
                           'PERSUS',
                           style: TextStyle(
                             fontSize: 22,
-                            fontWeight: FontWeight.bold,
+                            fontWeight:
+                                FontWeight.bold,
                           ),
                         ),
                         SizedBox(height: 4),
@@ -48,7 +108,9 @@ class PersusDrawer extends StatelessWidget {
                         SizedBox(height: 4),
                         Text(
                           'Hukuk dava dosya takip',
-                          style: TextStyle(fontSize: 12),
+                          style: TextStyle(
+                            fontSize: 12,
+                          ),
                         ),
                       ],
                     ),
@@ -59,9 +121,13 @@ class PersusDrawer extends StatelessWidget {
 
             ListTile(
               selected: selectedIndex == null,
-              leading: const Icon(Icons.dashboard_outlined),
+              leading: const Icon(
+                Icons.dashboard_outlined,
+              ),
               title: const Text('Ana Sayfa'),
-              trailing: selectedIndex == null ? const Icon(Icons.check) : null,
+              trailing: selectedIndex == null
+                  ? const Icon(Icons.check)
+                  : null,
               onTap: () {
                 Navigator.of(context).pop();
                 onDashboardSelected();
@@ -70,65 +136,117 @@ class PersusDrawer extends StatelessWidget {
 
             const Divider(),
 
-            _DrawerMenuItem(
-              index: 0,
-              selectedIndex: selectedIndex,
-              icon: Icons.note_add_outlined,
-              selectedIcon: Icons.note_add,
-              title: 'Dava Dosya Giriş',
-              onSelected: onSelected,
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: menus
+                    .map(
+                      (menu) => _buildMenuTree(
+                        context,
+                        menu,
+                        0,
+                      ),
+                    )
+                    .toList(),
+              ),
             ),
-            _DrawerMenuItem(
-              index: 1,
-              selectedIndex: selectedIndex,
-              icon: Icons.gavel_outlined,
-              selectedIcon: Icons.gavel,
-              title: 'Duruşma Listesi',
-              onSelected: onSelected,
-            ),
-            _DrawerMenuItem(
-              index: 2,
-              selectedIndex: selectedIndex,
-              icon: Icons.search_outlined,
-              selectedIcon: Icons.search,
-              title: 'Dava Sorgu',
-              onSelected: onSelected,
+
+            const Divider(),
+
+            ListTile(
+              leading: const Icon(
+                Icons.logout,
+              ),
+              title: const Text('Çıkış'),
+              onTap: onLogout,
             ),
           ],
         ),
       ),
     );
   }
-}
 
-class _DrawerMenuItem extends StatelessWidget {
-  final int index;
-  final int? selectedIndex;
-  final IconData icon;
-  final IconData selectedIcon;
-  final String title;
-  final ValueChanged<int> onSelected;
+  Widget _buildMenuTree(
+    BuildContext context,
+    SecurityMenu menu,
+    int level,
+  ) {
+    if (menu.hasChildren) {
+      return ExpansionTile(
+        leading: Icon(
+          level == 0
+              ? Icons.folder_outlined
+              : Icons.subdirectory_arrow_right,
+        ),
+        title: Text(
+          menu.displayTitle,
+          style: TextStyle(
+            fontWeight: level == 0
+                ? FontWeight.bold
+                : FontWeight.normal,
+          ),
+        ),
+        subtitle:
+            menu.aciklama.trim().isNotEmpty
+                ? Text(menu.aciklama)
+                : null,
+        childrenPadding:
+            const EdgeInsets.only(
+          left: 16,
+        ),
+        children: menu.childs
+            .map(
+              (child) => _buildMenuTree(
+                context,
+                child,
+                level + 1,
+              ),
+            )
+            .toList(),
+      );
+    }
 
-  const _DrawerMenuItem({
-    required this.index,
-    required this.selectedIndex,
-    required this.icon,
-    required this.selectedIcon,
-    required this.title,
-    required this.onSelected,
-  });
+    final mappedIndex =
+        _getMappedIndex(menu.adi);
 
-  @override
-  Widget build(BuildContext context) {
-    final isSelected = selectedIndex == index;
+    final isSelected =
+        mappedIndex != null &&
+        selectedIndex == mappedIndex;
+
+    final icon = _getIconForIndex(
+      mappedIndex,
+      isSelected,
+    );
 
     return ListTile(
       selected: isSelected,
-      leading: Icon(isSelected ? selectedIcon : icon),
-      title: Text(title),
-      trailing: isSelected ? const Icon(Icons.check) : null,
+      leading: Icon(icon),
+      title: Text(menu.displayTitle),
+      subtitle:
+          menu.url != null &&
+                  menu.url!.isNotEmpty
+              ? Text(menu.url!)
+              : null,
+      trailing: isSelected
+          ? const Icon(Icons.check)
+          : null,
       onTap: () {
-        onSelected(index);
+        if (mappedIndex != null) {
+          Navigator.of(context).pop();
+          onSelected(mappedIndex);
+          return;
+        }
+
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
+          SnackBar(
+            content: Text(
+              '${menu.displayTitle} ekranı henüz aktif değil.',
+            ),
+            duration:
+                const Duration(seconds: 2),
+          ),
+        );
       },
     );
   }

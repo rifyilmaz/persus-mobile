@@ -1,24 +1,45 @@
 import 'package:flutter/material.dart';
 
+import '../../auth/data/services/auth_service.dart';
+import '../../auth/data/services/auth_session.dart';
+
+import '../../auth/presentation/login_page.dart';
+
 import '../../case_file_entry/presentation/case_file_entry_page.dart';
 import '../../case_query/presentation/case_query_page.dart';
 import '../../hearing_list/presentation/hearing_list_page.dart';
-import '../../auth/data/services/mock_auth_service.dart';
-import '../../auth/presentation/login_page.dart';
-import 'widgets/persus_drawer.dart';
+
 import '../../change_password/presentation/change_password_page.dart';
 import '../../profile/presentation/profile_page.dart';
+
+import '../../security/data/models/security_menu.dart';
+import '../../security/data/services/security_service.dart';
+
+import 'widgets/persus_drawer.dart';
 
 class MainShell extends StatefulWidget {
   final int initialIndex;
 
+  final SecurityService securityService;
+
+  final AuthService authService;
+
+  final AuthSession authSession;
+
+  final List<SecurityMenu> menus;
+
   const MainShell({
     super.key,
     this.initialIndex = 0,
+    required this.securityService,
+    required this.authService,
+    required this.authSession,
+    required this.menus,
   });
 
   @override
-  State<MainShell> createState() => _MainShellState();
+  State<MainShell> createState() =>
+      _MainShellState();
 }
 
 class _MainShellState extends State<MainShell> {
@@ -36,37 +57,63 @@ class _MainShellState extends State<MainShell> {
     'Dava Sorgu',
   ];
 
+  @override
+  void initState() {
+    super.initState();
+
+    _selectedIndex =
+        _normalizeIndex(widget.initialIndex);
+  }
+
+  int _normalizeIndex(int index) {
+    if (index < 0) {
+      return 0;
+    }
+
+    if (index >= _pages.length) {
+      return 0;
+    }
+
+    return index;
+  }
+
   void _logout(BuildContext context) {
+    widget.authSession.clear();
+
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(
-        builder: (_) =>  LoginPage(
-          authService: MockAuthService(),
+        builder: (_) => LoginPage(
+          authService: widget.authService,
+          securityService:
+              widget.securityService,
+          authSession:
+              widget.authSession,
         ),
       ),
       (route) => false,
     );
   }
 
-  void _openProfile(BuildContext context) {
+  void _openProfile(
+    BuildContext context,
+  ) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => const ProfilePage(),
+        builder: (_) =>
+            const ProfilePage(),
       ),
     );
   }
 
-  void _openChangePassword(BuildContext context) {
+  void _openChangePassword(
+    BuildContext context,
+  ) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => const ChangePasswordPage(),
+        builder: (_) =>
+            const ChangePasswordPage(),
       ),
     );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedIndex = widget.initialIndex;
   }
 
   @override
@@ -74,11 +121,15 @@ class _MainShellState extends State<MainShell> {
     return Scaffold(
       drawer: PersusDrawer(
         selectedIndex: _selectedIndex,
+        menus: widget.menus,
         onDashboardSelected: () {
           Navigator.of(context).pop();
         },
         onSelected: (index) {
-          Navigator.of(context).pop();
+          if (index < 0 ||
+              index >= _pages.length) {
+            return;
+          }
 
           setState(() {
             _selectedIndex = index;
@@ -87,12 +138,16 @@ class _MainShellState extends State<MainShell> {
         onLogout: () => _logout(context),
       ),
       appBar: AppBar(
-        title: Text(_titles[_selectedIndex]),
+        title: Text(
+          _titles[_selectedIndex],
+        ),
         centerTitle: false,
         actions: [
           PopupMenuButton<String>(
             tooltip: 'Hesap',
-            icon: const Icon(Icons.account_circle_outlined),
+            icon: const Icon(
+              Icons.account_circle_outlined,
+            ),
             onSelected: (value) {
               if (value == 'profile') {
                 _openProfile(context);
@@ -107,7 +162,9 @@ class _MainShellState extends State<MainShell> {
                 value: 'profile',
                 child: Row(
                   children: [
-                    Icon(Icons.person_outline),
+                    Icon(
+                      Icons.person_outline,
+                    ),
                     SizedBox(width: 12),
                     Text('Profil'),
                   ],
@@ -117,7 +174,9 @@ class _MainShellState extends State<MainShell> {
                 value: 'password',
                 child: Row(
                   children: [
-                    Icon(Icons.sync_lock_outlined),
+                    Icon(
+                      Icons.sync_lock_outlined,
+                    ),
                     SizedBox(width: 12),
                     Text('Şifre Değiştir'),
                   ],
