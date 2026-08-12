@@ -22,9 +22,7 @@ class PersusDrawer extends StatelessWidget {
     this.menus = const [],
   });
 
-  int? _getMappedIndex(
-    String menuAdi,
-  ) {
+  int? _getMappedIndex(String menuAdi) {
     switch (menuAdi) {
       case 'menu.adt.davadosyayeni':
         return 0;
@@ -128,10 +126,7 @@ class PersusDrawer extends StatelessWidget {
               trailing: selectedIndex == null
                   ? const Icon(Icons.check)
                   : null,
-              onTap: () {
-                Navigator.of(context).pop();
-                onDashboardSelected();
-              },
+              onTap: onDashboardSelected,
             ),
 
             const Divider(),
@@ -213,14 +208,14 @@ class PersusDrawer extends StatelessWidget {
         mappedIndex != null &&
         selectedIndex == mappedIndex;
 
-    final icon = _getIconForIndex(
-      mappedIndex,
-      isSelected,
-    );
-
     return ListTile(
       selected: isSelected,
-      leading: Icon(icon),
+      leading: Icon(
+        _getIconForIndex(
+          mappedIndex,
+          isSelected,
+        ),
+      ),
       title: Text(menu.displayTitle),
       subtitle:
           menu.url != null &&
@@ -232,7 +227,6 @@ class PersusDrawer extends StatelessWidget {
           : null,
       onTap: () {
         if (mappedIndex != null) {
-          Navigator.of(context).pop();
           onSelected(mappedIndex);
           return;
         }

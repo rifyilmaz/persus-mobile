@@ -12,6 +12,9 @@ import '../../hearing_list/presentation/hearing_list_page.dart';
 import '../../change_password/presentation/change_password_page.dart';
 import '../../profile/presentation/profile_page.dart';
 
+import '../../dashboard/data/services/dashboard_service.dart';
+import '../../dashboard/presentation/dashboard_page.dart';
+
 import '../../security/data/models/security_menu.dart';
 import '../../security/data/services/security_service.dart';
 
@@ -26,6 +29,8 @@ class MainShell extends StatefulWidget {
 
   final AuthSession authSession;
 
+  final DashboardService dashboardService;
+
   final List<SecurityMenu> menus;
 
   const MainShell({
@@ -34,6 +39,7 @@ class MainShell extends StatefulWidget {
     required this.securityService,
     required this.authService,
     required this.authSession,
+    required this.dashboardService,
     required this.menus,
   });
 
@@ -88,6 +94,8 @@ class _MainShellState extends State<MainShell> {
               widget.securityService,
           authSession:
               widget.authSession,
+          dashboardService:
+              widget.dashboardService,
         ),
       ),
       (route) => false,
@@ -116,27 +124,66 @@ class _MainShellState extends State<MainShell> {
     );
   }
 
+  void _openDashboard(
+    BuildContext context,
+  ) {
+    Navigator.of(context).pop();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => DashboardPage(
+            securityService:
+                widget.securityService,
+            authService:
+                widget.authService,
+            authSession:
+                widget.authSession,
+            dashboardService:
+                widget.dashboardService,
+          ),
+        ),
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: PersusDrawer(
         selectedIndex: _selectedIndex,
         menus: widget.menus,
+
         onDashboardSelected: () {
-          Navigator.of(context).pop();
+          _openDashboard(context);
         },
+
         onSelected: (index) {
           if (index < 0 ||
               index >= _pages.length) {
             return;
           }
 
-          setState(() {
-            _selectedIndex = index;
+          Navigator.of(context).pop();
+
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) {
+              return;
+            }
+
+            setState(() {
+              _selectedIndex = index;
+            });
           });
         },
+
         onLogout: () => _logout(context),
       ),
+
       appBar: AppBar(
         title: Text(
           _titles[_selectedIndex],
@@ -197,6 +244,7 @@ class _MainShellState extends State<MainShell> {
           ),
         ],
       ),
+
       body: _pages[_selectedIndex],
     );
   }

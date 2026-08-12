@@ -4,11 +4,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:persus_mobile/features/auth/data/models/login_response.dart';
 import 'package:persus_mobile/features/auth/data/services/auth_service.dart';
 import 'package:persus_mobile/features/auth/presentation/login_page.dart';
+import 'package:persus_mobile/features/dashboard/data/models/dashboard_file_statistics.dart';
+import 'package:persus_mobile/features/dashboard/data/models/dashboard_meeting.dart';
 
 import 'package:persus_mobile/features/security/data/models/security_item.dart';
 import 'package:persus_mobile/features/security/data/models/security_menu.dart';
 import 'package:persus_mobile/features/security/data/services/security_service.dart';
 import 'package:persus_mobile/features/auth/data/services/auth_session.dart';
+import 'package:persus_mobile/features/dashboard/data/models/dashboard_statistics.dart';
+import 'package:persus_mobile/features/dashboard/data/services/dashboard_service.dart';
 
 class FakeAuthService implements AuthService {
   bool loginCalled = false;
@@ -51,6 +55,25 @@ class FakeSecurityService implements SecurityService {
   Future<List<SecurityMenu>> getMenus() async => [];
 }
 
+class MockDashboardService implements DashboardService {
+  @override
+  Future<DashboardStatistics> getStatistics() async {
+    return const DashboardStatistics.empty();
+  }
+
+  @override
+  Future<List<DashboardMeeting>> getDelayedMeetings() async => [];
+
+  @override
+  Future<List<DashboardMeeting>> getPendingMeetings() async => [];
+
+  @override
+  Future<List<DashboardMeeting>> getHearings() async => [];
+
+  @override
+  Future<List<DashboardFileStatistics>> getFileStatistics() async => [];
+}
+
 void main() {
   testWidgets(
     'Persus giriş ekranında kullanıcı adı, şifre ve giriş butonu gösterilir',
@@ -64,6 +87,7 @@ void main() {
             authService: authService,
             securityService: securityService,
             authSession: AuthSession(),
+            dashboardService: MockDashboardService(),
           ),
         ),
       );
@@ -92,6 +116,7 @@ void main() {
             authService: authService,
             securityService: securityService,
             authSession: AuthSession(),
+            dashboardService: MockDashboardService(),
           ),
         ),
       );
@@ -140,6 +165,7 @@ void main() {
             authService: authService,
             securityService: securityService,
             authSession: AuthSession(),
+            dashboardService: MockDashboardService(),
           ),
         ),
       );
@@ -179,6 +205,7 @@ void main() {
             authService: authService,
             securityService: securityService,
             authSession: AuthSession(),
+            dashboardService: MockDashboardService(),
           ),
         ),
       );

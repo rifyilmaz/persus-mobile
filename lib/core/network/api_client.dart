@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../features/auth/data/services/auth_session.dart';
+import 'package:flutter/foundation.dart';
 
 class ApiClient {
   final String baseUrl;
@@ -43,6 +44,9 @@ class ApiClient {
 
     try {
       final decoded = jsonDecode(response.body);
+      debugPrint(
+        'API RESPONSE [${response.statusCode}]: ${response.body}',
+      );
 
       if (decoded is! Map<String, dynamic>) {
         throw const FormatException();
