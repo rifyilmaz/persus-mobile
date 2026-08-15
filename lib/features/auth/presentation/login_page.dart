@@ -7,11 +7,14 @@ import '../../security/data/services/security_service.dart';
 import '../data/services/auth_service.dart';
 import '../data/services/auth_session.dart';
 
+import '../../case_query/data/services/case_service.dart';
+
 class LoginPage extends StatefulWidget {
   final AuthService authService;
   final SecurityService securityService;
   final AuthSession authSession;
   final DashboardService dashboardService;
+  final CaseService caseService; 
 
   const LoginPage({
     super.key,
@@ -19,6 +22,7 @@ class LoginPage extends StatefulWidget {
     required this.securityService,
     required this.authSession,
     required this.dashboardService,
+    required this.caseService, 
   });
 
   @override
@@ -26,11 +30,8 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final TextEditingController _usernameController =
-      TextEditingController();
-
-  final TextEditingController _passwordController =
-      TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
 
   bool _isLoading = false;
   bool _obscurePassword = true;
@@ -82,7 +83,6 @@ class _LoginPageState extends State<LoginPage> {
               ? loginResponse.errorMsg
               : 'Giriş işlemi başarısız oldu.';
         });
-
         return;
       }
 
@@ -93,6 +93,7 @@ class _LoginPageState extends State<LoginPage> {
             dashboardService: widget.dashboardService,
             authService: widget.authService,
             authSession: widget.authSession,
+            caseService: widget.caseService, 
           ),
         ),
       );
@@ -102,9 +103,7 @@ class _LoginPageState extends State<LoginPage> {
       }
 
       setState(() {
-        _errorMessage = error
-            .toString()
-            .replaceFirst('Exception: ', '');
+        _errorMessage = error.toString().replaceFirst('Exception: ', '');
       });
     } finally {
       if (mounted) {
@@ -133,17 +132,14 @@ class _LoginPageState extends State<LoginPage> {
                 child: Padding(
                   padding: const EdgeInsets.all(24),
                   child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.stretch,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const Icon(
                         Icons.hexagon_outlined,
                         size: 64,
                         color: Color(0xFF246BFE),
                       ),
-
                       const SizedBox(height: 16),
-
                       const Text(
                         'PERSUS',
                         textAlign: TextAlign.center,
@@ -152,69 +148,44 @@ class _LoginPageState extends State<LoginPage> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-
                       const SizedBox(height: 8),
-
                       const Text(
                         'Mobil Uygulama Giriş Ekranı',
                         textAlign: TextAlign.center,
                       ),
-
                       const SizedBox(height: 32),
-
                       TextField(
                         controller: _usernameController,
                         enabled: !_isLoading,
-
                         inputFormatters: const [],
-
                         keyboardType: TextInputType.text,
-
-                        textInputAction:
-                            TextInputAction.next,
-
+                        textInputAction: TextInputAction.next,
                         autocorrect: false,
-
                         enableSuggestions: true,
-
-                        textCapitalization:
-                            TextCapitalization.none,
-
+                        textCapitalization: TextCapitalization.none,
                         decoration: const InputDecoration(
                           labelText: 'Kullanıcı',
-                          hintText:
-                              'Kullanıcı adınızı girin',
-                          prefixIcon: Icon(
-                            Icons.person_outline,
-                          ),
+                          hintText: 'Kullanıcı adınızı girin',
+                          prefixIcon: Icon(Icons.person_outline),
                           border: OutlineInputBorder(),
                         ),
                       ),
-
                       const SizedBox(height: 16),
-
                       TextField(
                         controller: _passwordController,
                         enabled: !_isLoading,
                         obscureText: _obscurePassword,
-
-                        textInputAction:
-                            TextInputAction.done,
-
+                        textInputAction: TextInputAction.done,
                         onSubmitted: (_) {
                           if (!_isLoading) {
                             _login();
                           }
                         },
-
                         decoration: InputDecoration(
                           labelText: 'Şifre',
                           hintText: 'Şifrenizi girin',
-                          prefixIcon: const Icon(
-                            Icons.lock_outline,
-                          ),
-                          border:
-                              const OutlineInputBorder(),
+                          prefixIcon: const Icon(Icons.lock_outline),
+                          border: const OutlineInputBorder(),
                           suffixIcon: IconButton(
                             tooltip: _obscurePassword
                                 ? 'Şifreyi göster'
@@ -223,60 +194,45 @@ class _LoginPageState extends State<LoginPage> {
                                 ? null
                                 : () {
                                     setState(() {
-                                      _obscurePassword =
-                                          !_obscurePassword;
+                                      _obscurePassword = !_obscurePassword;
                                     });
                                   },
                             icon: Icon(
                               _obscurePassword
-                                  ? Icons
-                                      .visibility_outlined
-                                  : Icons
-                                      .visibility_off_outlined,
+                                  ? Icons.visibility_outlined
+                                  : Icons.visibility_off_outlined,
                             ),
                           ),
                         ),
                       ),
-
                       if (_errorMessage != null) ...[
                         const SizedBox(height: 16),
-
                         Container(
-                          padding:
-                              const EdgeInsets.all(12),
+                          padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color:
-                                colorScheme.errorContainer,
-                            borderRadius:
-                                BorderRadius.circular(8),
+                            color: colorScheme.errorContainer,
+                            borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             _errorMessage!,
                             style: TextStyle(
-                              color: colorScheme
-                                  .onErrorContainer,
+                              color: colorScheme.onErrorContainer,
                             ),
                           ),
                         ),
                       ],
-
                       const SizedBox(height: 24),
-
                       FilledButton(
-                        onPressed:
-                            _isLoading ? null : _login,
+                        onPressed: _isLoading ? null : _login,
                         child: _isLoading
                             ? const SizedBox(
                                 width: 22,
                                 height: 22,
-                                child:
-                                    CircularProgressIndicator(
+                                child: CircularProgressIndicator(
                                   strokeWidth: 2,
                                 ),
                               )
-                            : const Text(
-                                'Giriş Yap',
-                              ),
+                            : const Text('Giriş Yap'),
                       ),
                     ],
                   ),

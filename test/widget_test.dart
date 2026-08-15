@@ -4,8 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:persus_mobile/features/auth/data/models/login_response.dart';
 import 'package:persus_mobile/features/auth/data/services/auth_service.dart';
 import 'package:persus_mobile/features/auth/presentation/login_page.dart';
-import 'package:persus_mobile/features/dashboard/data/models/dashboard_file_statistics.dart';
-import 'package:persus_mobile/features/dashboard/data/models/dashboard_meeting.dart';
 
 import 'package:persus_mobile/features/security/data/models/security_item.dart';
 import 'package:persus_mobile/features/security/data/models/security_menu.dart';
@@ -13,6 +11,11 @@ import 'package:persus_mobile/features/security/data/services/security_service.d
 import 'package:persus_mobile/features/auth/data/services/auth_session.dart';
 import 'package:persus_mobile/features/dashboard/data/models/dashboard_statistics.dart';
 import 'package:persus_mobile/features/dashboard/data/services/dashboard_service.dart';
+
+import 'package:persus_mobile/features/case_query/data/models/case_model.dart';
+import 'package:persus_mobile/features/case_query/data/services/case_service.dart';
+import 'package:persus_mobile/features/dashboard/data/models/dashboard_meeting.dart';
+import 'package:persus_mobile/features/dashboard/data/models/dashboard_file_statistics.dart';
 
 class FakeAuthService implements AuthService {
   bool loginCalled = false;
@@ -74,12 +77,18 @@ class MockDashboardService implements DashboardService {
   Future<List<DashboardFileStatistics>> getFileStatistics() async => [];
 }
 
+class MockCaseService implements CaseService {
+  @override
+  Future<List<CaseModel>> getCases({Map<String, dynamic>? filters}) async => [];
+}
+
 void main() {
   testWidgets(
     'Persus giriş ekranında kullanıcı adı, şifre ve giriş butonu gösterilir',
     (tester) async {
       final authService = FakeAuthService();
       final securityService = FakeSecurityService();
+      final caseService = MockCaseService(); 
 
       await tester.pumpWidget(
         MaterialApp(
@@ -88,6 +97,7 @@ void main() {
             securityService: securityService,
             authSession: AuthSession(),
             dashboardService: MockDashboardService(),
+            caseService: caseService,
           ),
         ),
       );
@@ -109,6 +119,7 @@ void main() {
     (tester) async {
       final authService = FakeAuthService();
       final securityService = FakeSecurityService();
+      final caseService = MockCaseService(); 
 
       await tester.pumpWidget(
         MaterialApp(
@@ -117,6 +128,7 @@ void main() {
             securityService: securityService,
             authSession: AuthSession(),
             dashboardService: MockDashboardService(),
+            caseService: caseService, 
           ),
         ),
       );
@@ -158,6 +170,7 @@ void main() {
     (tester) async {
       final authService = FakeAuthService();
       final securityService = FakeSecurityService();
+      final caseService = MockCaseService(); 
 
       await tester.pumpWidget(
         MaterialApp(
@@ -166,6 +179,7 @@ void main() {
             securityService: securityService,
             authSession: AuthSession(),
             dashboardService: MockDashboardService(),
+            caseService: caseService, 
           ),
         ),
       );
@@ -198,6 +212,7 @@ void main() {
     (tester) async {
       final authService = FakeAuthService();
       final securityService = FakeSecurityService();
+      final caseService = MockCaseService();
 
       await tester.pumpWidget(
         MaterialApp(
@@ -206,6 +221,7 @@ void main() {
             securityService: securityService,
             authSession: AuthSession(),
             dashboardService: MockDashboardService(),
+            caseService: caseService, 
           ),
         ),
       );

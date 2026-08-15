@@ -37,6 +37,33 @@ class ApiClient {
     return _handleResponse(response);
   }
 
+  Future<Map<String, dynamic>> post(
+    String path, {
+    Map<String, dynamic>? body,
+  }) async {
+    final token = session.token;
+
+    if (token == null || token.isEmpty) {
+      throw Exception(
+        'Oturum bulunamadı. Lütfen tekrar giriş yapın.',
+      );
+    }
+
+    final uri = Uri.parse('$baseUrl$path');
+
+    final response = await http.post(
+      uri,
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: body != null ? jsonEncode(body) : null,
+    );
+
+    return _handleResponse(response);
+  }
+
   Map<String, dynamic> _handleResponse(
     http.Response response,
   ) {

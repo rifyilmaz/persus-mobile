@@ -14,6 +14,9 @@ import 'features/dashboard/data/services/real_dashboard_service.dart';
 import 'features/security/data/services/real_security_service.dart';
 import 'features/security/data/services/security_service.dart';
 
+import 'features/case_query/data/services/case_service.dart';
+import 'features/case_query/data/services/real_case_service.dart';
+
 void main() {
   runApp(
     const PersusApp(),
@@ -30,42 +33,41 @@ class PersusApp extends StatelessWidget {
     const String baseUrl =
         'https://www.persusapp.com.tr/persus-web/api';
 
-    final AuthSession authSession =
-        AuthSession();
+    final AuthSession authSession = AuthSession();
 
     final ApiClient apiClient = ApiClient(
       baseUrl: baseUrl,
       session: authSession,
     );
 
-    final AuthService authService =
-        RealAuthService(
+    final AuthService authService = RealAuthService(
       baseUrl: baseUrl,
       session: authSession,
     );
 
-    final SecurityService securityService =
-        RealSecurityService(
+    final SecurityService securityService = RealSecurityService(
       apiClient: apiClient,
     );
 
-    final DashboardService dashboardService =
-        RealDashboardService(
+    final DashboardService dashboardService = RealDashboardService(
+      apiClient: apiClient,
+    );
+
+
+    final CaseService caseService = RealCaseService(
       apiClient: apiClient,
     );
 
     return MaterialApp(
       title: 'Persus Mobile',
-
       debugShowCheckedModeBanner: false,
-
       theme: AppTheme.lightTheme,
-
       home: LoginPage(
         authService: authService,
         securityService: securityService,
         authSession: authSession,
         dashboardService: dashboardService,
+        caseService: caseService, 
       ),
     );
   }

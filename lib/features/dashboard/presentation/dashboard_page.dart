@@ -16,6 +16,8 @@ import '../../shell/presentation/widgets/persus_drawer.dart';
 import '../data/models/dashboard_statistics.dart';
 import '../data/services/dashboard_service.dart';
 
+import '../../case_query/data/services/case_service.dart';
+
 import 'dashboard_detail_page.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -23,6 +25,7 @@ class DashboardPage extends StatefulWidget {
   final AuthService authService;
   final AuthSession authSession;
   final DashboardService dashboardService;
+  final CaseService caseService; 
 
   const DashboardPage({
     super.key,
@@ -30,6 +33,7 @@ class DashboardPage extends StatefulWidget {
     required this.authService,
     required this.authSession,
     required this.dashboardService,
+    required this.caseService, 
   });
 
   @override
@@ -42,8 +46,7 @@ class _DashboardPageState extends State<DashboardPage> {
   bool _isLoadingMenus = true;
   String? _menuError;
 
-  DashboardStatistics _statistics =
-      const DashboardStatistics.empty();
+  DashboardStatistics _statistics = const DashboardStatistics.empty();
 
   bool _isLoadingStatistics = true;
   String? _statisticsError;
@@ -65,8 +68,7 @@ class _DashboardPageState extends State<DashboardPage> {
     }
 
     try {
-      final menus =
-          await widget.securityService.getMenus();
+      final menus = await widget.securityService.getMenus();
 
       if (!mounted) {
         return;
@@ -83,9 +85,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
       setState(() {
         _isLoadingMenus = false;
-        _menuError = error
-            .toString()
-            .replaceFirst('Exception: ', '');
+        _menuError = error.toString().replaceFirst('Exception: ', '');
       });
     }
   }
@@ -99,8 +99,7 @@ class _DashboardPageState extends State<DashboardPage> {
     }
 
     try {
-      final statistics =
-          await widget.dashboardService.getStatistics();
+      final statistics = await widget.dashboardService.getStatistics();
 
       if (!mounted) {
         return;
@@ -117,9 +116,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
       setState(() {
         _isLoadingStatistics = false;
-        _statisticsError = error
-            .toString()
-            .replaceFirst('Exception: ', '');
+        _statisticsError = error.toString().replaceFirst('Exception: ', '');
       });
     }
   }
@@ -141,6 +138,7 @@ class _DashboardPageState extends State<DashboardPage> {
           securityService: widget.securityService,
           authSession: widget.authSession,
           dashboardService: widget.dashboardService,
+          caseService: widget.caseService, 
         ),
       ),
       (route) => false,
@@ -164,18 +162,18 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   void _openDetail(
-      BuildContext context,
-      DashboardDetailType type,
-    ) {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => DashboardDetailPage(
-            type: type,
-            dashboardService: widget.dashboardService, 
-          ),
+    BuildContext context,
+    DashboardDetailType type,
+  ) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => DashboardDetailPage(
+          type: type,
+          dashboardService: widget.dashboardService,
         ),
-      );
-    }
+      ),
+    );
+  }
 
   void _openMainShell(
     BuildContext context,
@@ -196,14 +194,11 @@ class _DashboardPageState extends State<DashboardPage> {
         MaterialPageRoute(
           builder: (_) => MainShell(
             initialIndex: index,
-            securityService:
-                widget.securityService,
-            authService:
-                widget.authService,
-            authSession:
-                widget.authSession,
-            dashboardService:
-                widget.dashboardService,
+            securityService: widget.securityService,
+            authService: widget.authService,
+            authSession: widget.authSession,
+            dashboardService: widget.dashboardService,
+            caseService: widget.caseService,
             menus: _menus,
           ),
         ),
@@ -247,9 +242,7 @@ class _DashboardPageState extends State<DashboardPage> {
         actions: [
           IconButton(
             tooltip: 'Yenile',
-            onPressed: _isLoadingStatistics
-                ? null
-                : _refreshDashboard,
+            onPressed: _isLoadingStatistics ? null : _refreshDashboard,
             icon: const Icon(Icons.refresh),
           ),
           PopupMenuButton<String>(
@@ -308,9 +301,7 @@ class _DashboardPageState extends State<DashboardPage> {
           padding: const EdgeInsets.all(16),
           children: [
             const _DashboardHeader(),
-
             const SizedBox(height: 20),
-
             Row(
               children: [
                 const Expanded(
@@ -332,13 +323,10 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
               ],
             ),
-
             if (_statisticsError != null) ...[
               const SizedBox(height: 10),
               Card(
-                color: Theme.of(context)
-                    .colorScheme
-                    .errorContainer,
+                color: Theme.of(context).colorScheme.errorContainer,
                 child: Padding(
                   padding: const EdgeInsets.all(12),
                   child: Row(
@@ -355,16 +343,12 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
               ),
             ],
-
             const SizedBox(height: 12),
-
             GridView.builder(
               itemCount: summaryItems.length,
               shrinkWrap: true,
-              physics:
-                  const NeverScrollableScrollPhysics(),
-              gridDelegate:
-                  const SliverGridDelegateWithFixedCrossAxisCount(
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
                 mainAxisSpacing: 12,
                 crossAxisSpacing: 12,
@@ -382,15 +366,10 @@ class _DashboardPageState extends State<DashboardPage> {
                 );
               },
             ),
-
             const SizedBox(height: 20),
-
             const _AnnouncementsCard(),
-
             const SizedBox(height: 16),
-
             const _AgendaCard(),
-
             const SizedBox(height: 24),
           ],
         ),
@@ -413,8 +392,7 @@ class _DashboardPageState extends State<DashboardPage> {
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
-              mainAxisAlignment:
-                  MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Icon(
                   Icons.error_outline,
@@ -471,8 +449,7 @@ class _DashboardHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color:
-          Theme.of(context).colorScheme.primaryContainer,
+      color: Theme.of(context).colorScheme.primaryContainer,
       child: const Padding(
         padding: EdgeInsets.all(20),
         child: Row(
@@ -487,8 +464,7 @@ class _DashboardHeader extends StatelessWidget {
             SizedBox(width: 16),
             Expanded(
               child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'PERSUS',
@@ -543,8 +519,7 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme =
-        Theme.of(context).colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -555,8 +530,7 @@ class _SummaryCard extends StatelessWidget {
           child: Stack(
             children: [
               Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     item.title,
@@ -567,8 +541,7 @@ class _SummaryCard extends StatelessWidget {
                   const Spacer(),
                   CircleAvatar(
                     radius: 24,
-                    backgroundColor:
-                        colorScheme.primaryContainer,
+                    backgroundColor: colorScheme.primaryContainer,
                     child: Icon(item.icon),
                   ),
                 ],
@@ -578,8 +551,7 @@ class _SummaryCard extends StatelessWidget {
                 top: 0,
                 child: CircleAvatar(
                   radius: 16,
-                  backgroundColor:
-                      colorScheme.secondary,
+                  backgroundColor: colorScheme.secondary,
                   child: Text(
                     item.count.toString(),
                     style: const TextStyle(
@@ -621,8 +593,7 @@ class _AnnouncementsCard extends StatelessWidget {
           padding: EdgeInsets.all(20),
           child: Center(
             child: Column(
-              mainAxisAlignment:
-                  MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
                   Icons.campaign_outlined,
@@ -669,8 +640,7 @@ class _AgendaCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Row(
               children: [
@@ -693,10 +663,8 @@ class _AgendaCard extends StatelessWidget {
             GridView.builder(
               itemCount: days.length,
               shrinkWrap: true,
-              physics:
-                  const NeverScrollableScrollPhysics(),
-              gridDelegate:
-                  const SliverGridDelegateWithFixedCrossAxisCount(
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 7,
                 mainAxisSpacing: 6,
                 crossAxisSpacing: 6,
@@ -710,20 +678,14 @@ class _AgendaCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: isSelected
                         ? Colors.red
-                        : Theme.of(context)
-                            .colorScheme
-                            .surfaceContainerHighest,
+                        : Theme.of(context).colorScheme.surfaceContainerHighest,
                     shape: BoxShape.circle,
                   ),
                   child: Text(
                     day.toString(),
                     style: TextStyle(
-                      color: isSelected
-                          ? Colors.white
-                          : null,
-                      fontWeight: isSelected
-                          ? FontWeight.bold
-                          : FontWeight.normal,
+                      color: isSelected ? Colors.white : null,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),
                 );

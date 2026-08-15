@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../auth/data/services/auth_service.dart';
 import '../../auth/data/services/auth_session.dart';
-
 import '../../auth/presentation/login_page.dart';
 
 import '../../case_file_entry/presentation/case_file_entry_page.dart';
@@ -18,19 +17,17 @@ import '../../dashboard/presentation/dashboard_page.dart';
 import '../../security/data/models/security_menu.dart';
 import '../../security/data/services/security_service.dart';
 
+import '../../case_query/data/services/case_service.dart';
+
 import 'widgets/persus_drawer.dart';
 
 class MainShell extends StatefulWidget {
   final int initialIndex;
-
   final SecurityService securityService;
-
   final AuthService authService;
-
   final AuthSession authSession;
-
   final DashboardService dashboardService;
-
+  final CaseService caseService; 
   final List<SecurityMenu> menus;
 
   const MainShell({
@@ -40,21 +37,21 @@ class MainShell extends StatefulWidget {
     required this.authService,
     required this.authSession,
     required this.dashboardService,
+    required this.caseService,
     required this.menus,
   });
 
   @override
-  State<MainShell> createState() =>
-      _MainShellState();
+  State<MainShell> createState() => _MainShellState();
 }
 
 class _MainShellState extends State<MainShell> {
   late int _selectedIndex;
 
-  final List<Widget> _pages = const [
-    CaseFileEntryPage(),
-    HearingListPage(),
-    CaseQueryPage(),
+  late final List<Widget> _pages = [
+    const CaseFileEntryPage(),
+    const HearingListPage(),
+    CaseQueryPage(caseService: widget.caseService), 
   ];
 
   final List<String> _titles = const [
@@ -66,20 +63,16 @@ class _MainShellState extends State<MainShell> {
   @override
   void initState() {
     super.initState();
-
-    _selectedIndex =
-        _normalizeIndex(widget.initialIndex);
+    _selectedIndex = _normalizeIndex(widget.initialIndex);
   }
 
   int _normalizeIndex(int index) {
     if (index < 0) {
       return 0;
     }
-
     if (index >= _pages.length) {
       return 0;
     }
-
     return index;
   }
 
@@ -90,43 +83,33 @@ class _MainShellState extends State<MainShell> {
       MaterialPageRoute(
         builder: (_) => LoginPage(
           authService: widget.authService,
-          securityService:
-              widget.securityService,
-          authSession:
-              widget.authSession,
-          dashboardService:
-              widget.dashboardService,
+          securityService: widget.securityService,
+          authSession: widget.authSession,
+          dashboardService: widget.dashboardService,
+          caseService: widget.caseService, 
         ),
       ),
       (route) => false,
     );
   }
 
-  void _openProfile(
-    BuildContext context,
-  ) {
+  void _openProfile(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) =>
-            const ProfilePage(),
+        builder: (_) => const ProfilePage(),
       ),
     );
   }
 
-  void _openChangePassword(
-    BuildContext context,
-  ) {
+  void _openChangePassword(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) =>
-            const ChangePasswordPage(),
+        builder: (_) => const ChangePasswordPage(),
       ),
     );
   }
 
-  void _openDashboard(
-    BuildContext context,
-  ) {
+  void _openDashboard(BuildContext context) {
     Navigator.of(context).pop();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -137,14 +120,11 @@ class _MainShellState extends State<MainShell> {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => DashboardPage(
-            securityService:
-                widget.securityService,
-            authService:
-                widget.authService,
-            authSession:
-                widget.authSession,
-            dashboardService:
-                widget.dashboardService,
+            securityService: widget.securityService,
+            authService: widget.authService,
+            authSession: widget.authSession,
+            dashboardService: widget.dashboardService,
+            caseService: widget.caseService,
           ),
         ),
       );
@@ -157,33 +137,25 @@ class _MainShellState extends State<MainShell> {
       drawer: PersusDrawer(
         selectedIndex: _selectedIndex,
         menus: widget.menus,
-
         onDashboardSelected: () {
           _openDashboard(context);
         },
-
         onSelected: (index) {
-          if (index < 0 ||
-              index >= _pages.length) {
+          if (index < 0 || index >= _pages.length) {
             return;
           }
-
           Navigator.of(context).pop();
-
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!mounted) {
               return;
             }
-
             setState(() {
               _selectedIndex = index;
             });
           });
         },
-
         onLogout: () => _logout(context),
       ),
-
       appBar: AppBar(
         title: Text(
           _titles[_selectedIndex],
@@ -209,9 +181,7 @@ class _MainShellState extends State<MainShell> {
                 value: 'profile',
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.person_outline,
-                    ),
+                    Icon(Icons.person_outline),
                     SizedBox(width: 12),
                     Text('Profil'),
                   ],
@@ -221,9 +191,7 @@ class _MainShellState extends State<MainShell> {
                 value: 'password',
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.sync_lock_outlined,
-                    ),
+                    Icon(Icons.sync_lock_outlined),
                     SizedBox(width: 12),
                     Text('Şifre Değiştir'),
                   ],
@@ -244,7 +212,6 @@ class _MainShellState extends State<MainShell> {
           ),
         ],
       ),
-
       body: _pages[_selectedIndex],
     );
   }
